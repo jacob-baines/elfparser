@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="locked">icon_72529.ico</file>
+    </qresource>
+</RCC>
