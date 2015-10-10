@@ -377,6 +377,10 @@ std::string AbstractSegments::determineFamily() const
     {
         return "ELF.Elknot";
     }
+    if (files.find("tshd.c") != files.end())
+    {
+        return "TinySH";
+    }
 
     const std::vector<AbstractSymbol>& symbols(getAllSymbols());
     BOOST_FOREACH(const AbstractSymbol& symbol, symbols)

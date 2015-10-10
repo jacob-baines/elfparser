@@ -73,6 +73,7 @@ namespace
         ("pcap_read", std::make_pair(elf::k_packetSniff, "pcap_read() found"))
         ("pcap_loop", std::make_pair(elf::k_packetSniff, "pcap_loop() found"))
         ("system", std::make_pair(elf::k_shell, "system() found"))
+        ("tshd_runshell", std::make_pair(elf::k_shell, "tinysh function found."))
         ("dlsym", std::make_pair(elf::k_hooking, "dlsym() found in hooking context"))
         ("ptrace", std::make_pair(elf::k_antidebug, "ptrace detection found"));
 }
