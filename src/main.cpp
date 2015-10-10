@@ -105,7 +105,13 @@ namespace
         }
 
         parser.evaluate();
-        std::cout << p_fileName << " - Score: " << parser.getScore() << std::endl;
+        std::cout << p_fileName << " - Score: " << parser.getScore();
+        if (!parser.getFamily().empty())
+        {
+            std::cout << " [Family: " << parser.getFamily() << "]";
+        }
+        std::cout << std::endl;
+
         if (p_printReasons)
         {
             parser.printReasons();

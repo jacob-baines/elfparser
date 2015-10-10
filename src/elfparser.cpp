@@ -61,6 +61,7 @@ ELFParser::ELFParser() :
     m_searchValues.push_back(new SearchValue("/proc/cpuinfo",  elf::k_infoGathering, "Examines /proc/cpuinfo"));
     m_searchValues.push_back(new SearchValue("/proc/meminfo",  elf::k_infoGathering, "Examines /proc/meminfo"));
     m_searchValues.push_back(new SearchValue("/proc/stat", elf::k_infoGathering, "Examines /proc/stat"));
+    m_searchValues.push_back(new SearchValue("HISTFILE=", elf::k_envVariables, "Accesses the bash history file environment variable HISTFILE."));
     BOOST_FOREACH(SearchValue& value, m_searchValues)
     {
         m_searchEngine.addWord(value.m_search, &value);
@@ -403,7 +404,7 @@ void ELFParser::regexScan()
         }
 
         // commands
-        boost::regex shellPattern("(?:(?:wget|chmod|killall|nohup) [[:print:]]+)|(?:tar -[[:print:]]+)");
+        boost::regex shellPattern("(?:(?:wget|chmod|killall|nohup|sed) [[:print:]]+)|(?:tar -[[:print:]]+)");
         start = m_mapped_file.data();
         while (boost::regex_search(start, m_mapped_file.data() + m_fileSize,m,shellPattern))
         {
