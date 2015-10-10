@@ -49,13 +49,13 @@ std::string ProgramHeaders::printToStdOut() const
     BOOST_FOREACH(const AbstractProgramHeader& header, m_programHeaders)
     {
         returnValue << "\tEntry type=" << header.getName()
-        << " flags=" << std::dec << header.getFlags()
-        << " offset=0x" << std::hex << header.getOffset()
-        << " vaddr=0x" << header.getVirtualAddress()
-        << " paddr=0x" << header.getPhysicalAddress()
-        << " filesz=0x" << header.getFileSize()
-        << " memsz=0x" << header.getMemorySize()
-        << std::dec << "\n";
+                    << " flags=" << std::dec << header.getFlags()
+                    << " offset=0x" << std::hex << header.getOffset()
+                    << " vaddr=0x" << header.getVirtualAddress()
+                    << " paddr=0x" << header.getPhysicalAddress()
+                    << " filesz=0x" << header.getFileSize()
+                    << " memsz=0x" << header.getMemorySize()
+                    << std::dec << "\n";
     }
     return returnValue.str();
 }

@@ -108,7 +108,7 @@ void Symbols::createSymbols(const char* p_data,
                             bool p_is64, bool p_isLE, bool p_isDY)
 {
     m_isDY = p_isDY;
-    if (p_symTabOffset == 0 || p_strTabOffset == 0)
+    if (p_symTabOffset == 0 || p_strTabOffset == 0 || p_symTabSize == 0)
     {
         return;
     }
@@ -187,7 +187,6 @@ void Symbols::createSymbols(const char* p_data,
                 m_files.insert(symbol.getName());
             }
         }
-
         m_symbols.push_back(symbol);
     }
 }

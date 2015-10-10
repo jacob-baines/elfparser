@@ -35,8 +35,7 @@ AbstractSegments::AbstractSegments() :
     m_is64(false),
     m_isLE(false),
     m_isDY(false),
-    m_fakeDynamicStringTable(false),
-    m_strTabMissingVirtAddress(false)
+    m_fakeDynamicStringTable(false)
 {
 }
 
@@ -85,8 +84,9 @@ void AbstractSegments::makeSegmentFromProgramHeader(const AbstractProgramHeader&
         m_setBase = true;
     }
     m_programs.emplace_back(p_header.getName(), p_header.getName(), p_header.getOffset(),
-                            p_header.getVirtualAddress(), p_header.getMemorySize(), 0,
-                            p_header.isExecutable(), p_header.isWritable(),
+                            p_header.getVirtualAddress(),
+                            p_header.getMemorySize() ? p_header.getMemorySize() : p_header.getFileSize(),
+                            0, p_header.isExecutable(), p_header.isWritable(),
                             p_header.getType() == elf::k_pdynamic);
 }
 
@@ -233,12 +233,6 @@ void AbstractSegments::generateSegments()
             }
             else
             {
-                // a missing virtual address is enough to confuse readelf.
-                if (m_sections[link].getPhysOffset() != 0 &&
-                    m_sections[link].getVirtAddress() == 0)
-                {
-                    m_strTabMissingVirtAddress = true;
-                }
                 m_types.push_back(new StringTableSegment(m_data, 
                     m_sections[link].getPhysOffset(), m_sections[link].getSize(), elf::k_strtab));
                 m_offsets.insert(m_data + m_sections[link].getPhysOffset());
@@ -336,10 +330,6 @@ void AbstractSegments::evaluate(std::vector<std::pair<boost::int32_t, std::strin
     if (m_fakeDynamicStringTable)
     {
         p_capabilities[elf::k_antidebug].insert("Fake symbol table strings in sections");
-    }
-    if (m_strTabMissingVirtAddress)
-    {
-        p_capabilities[elf::k_antidebug].insert("Symbol table strings section had virtual address zeroed out");
     }
 }
 
