@@ -410,7 +410,7 @@ void ELFParser::regexScan()
         }
 
         // commands
-        boost::regex shellPattern("(?:(?:wget|chmod|killall|nohup|sed|insmod) [[:print:]]+)|(?:tar -[[:print:]]+)");
+        boost::regex shellPattern("(?:(?:wget|chmod|killall|nohup|sed|insmod|echo) [[:print:]]+)|(?:tar -[[:print:]]+)");
         start = m_mapped_file.data();
         while (boost::regex_search(start, m_mapped_file.data() + m_fileSize, m, shellPattern))
         {
@@ -434,7 +434,7 @@ void ELFParser::regexScan()
         }
 
         // file paths
-        boost::regex filePaths("/(?:usr|etc|tmp)/[[:print:]]+");
+        boost::regex filePaths("/(?:usr|etc|tmp|bin)/[a-zA-Z0-9/\\._\\-]+");
         start = m_mapped_file.data();
         while (boost::regex_search(start, m_mapped_file.data() + m_fileSize, m, filePaths))
         {
