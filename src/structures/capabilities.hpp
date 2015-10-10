@@ -24,7 +24,8 @@ namespace elf
         k_url,
         k_hooking,
         k_antidebug,
-        k_dropper
+        k_dropper,
+        k_filePath
     };
 }
 #endif

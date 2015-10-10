@@ -231,6 +231,9 @@ void ELFParser::evaluate()
             case elf::k_antidebug:
                 m_reasons.push_back(std::make_pair(10 * it->second.size(), std::string("Anti debug techniques")));
                 break;
+            case elf::k_filePath:
+                m_reasons.push_back(std::make_pair(1 * it->second.size(), std::string("File paths")));
+                break;
             case elf::k_dropper:
                 m_reasons.push_back(std::make_pair(50 * it->second.size(), std::string("Dropper functionaltiy")));
                 break;
@@ -349,6 +352,9 @@ void ELFParser::printCapabilities() const
             case elf::k_dropper:
                 std::cout << "\tDropper" << std::endl;
                 break;
+            case elf::k_filePath:
+                std::cout << "\tFile Path" << std::endl;
+                break;
             default:
                 std::cout << "\tUnassigned" << std::endl;
                 break;
@@ -404,9 +410,9 @@ void ELFParser::regexScan()
         }
 
         // commands
-        boost::regex shellPattern("(?:(?:wget|chmod|killall|nohup|sed) [[:print:]]+)|(?:tar -[[:print:]]+)");
+        boost::regex shellPattern("(?:(?:wget|chmod|killall|nohup|sed|insmod) [[:print:]]+)|(?:tar -[[:print:]]+)");
         start = m_mapped_file.data();
-        while (boost::regex_search(start, m_mapped_file.data() + m_fileSize,m,shellPattern))
+        while (boost::regex_search(start, m_mapped_file.data() + m_fileSize, m, shellPattern))
         {
             for (auto x:m)
             {
@@ -418,11 +424,23 @@ void ELFParser::regexScan()
         // url request
         boost::regex urlRequest("(?:POST (?:/|%s)|GET (?:/|%s)|CONNECT (?:/|%s)|User-Agent:)[[:print:]]+");
         start = m_mapped_file.data();
-        while (boost::regex_search(start, m_mapped_file.data() + m_fileSize,m,urlRequest))
+        while (boost::regex_search(start, m_mapped_file.data() + m_fileSize, m, urlRequest))
         {
             for (auto x:m)
             {
                 m_capabilities[elf::k_http].insert(x);
+            }
+            start = (m_mapped_file.data() + m_fileSize) - m.suffix().length();
+        }
+
+        // file paths
+        boost::regex filePaths("/(?:usr|etc|tmp)/[[:print:]]+");
+        start = m_mapped_file.data();
+        while (boost::regex_search(start, m_mapped_file.data() + m_fileSize, m, filePaths))
+        {
+            for (auto x:m)
+            {
+                m_capabilities[elf::k_filePath].insert(x);
             }
             start = (m_mapped_file.data() + m_fileSize) - m.suffix().length();
         }
