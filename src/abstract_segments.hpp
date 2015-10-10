@@ -132,6 +132,9 @@ private:
 
     //! indicates if we detected a fake dynamic string table
     bool m_fakeDynamicStringTable;
+
+    //! indicates if we detected a valid string table section header with no virt addr
+    bool m_strTabMissingVirtAddress;
 };
 
 #endif

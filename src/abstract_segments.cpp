@@ -35,7 +35,8 @@ AbstractSegments::AbstractSegments() :
     m_is64(false),
     m_isLE(false),
     m_isDY(false),
-    m_fakeDynamicStringTable(false)
+    m_fakeDynamicStringTable(false),
+    m_strTabMissingVirtAddress(false)
 {
 }
 
@@ -146,6 +147,11 @@ void AbstractSegments::createDynamic()
 
 void AbstractSegments::generateSegments()
 {
+    // Track the string and symbol tables are correlate them using link after
+    // the first pass through.
+    std::size_t tableIndex = 0;
+    std::set<std::size_t> strTab;
+    std::set<std::size_t> symTab;
     BOOST_FOREACH(const Segment& section, m_sections)
     {
         if (m_offsets.find(m_data + section.getPhysOffset()) == m_offsets.end())
@@ -186,30 +192,11 @@ void AbstractSegments::generateSegments()
             }
             else if (section.getType() == "K_STRTAB")
             {
-                if (section.getPhysOffset() != 0 &&
-                    section.getVirtAddress() == m_dynamic.getStringTableVirtualAddress() &&
-                    section.getPhysOffset() != getOffsetFromVirt(m_dynamic.getStringTableVirtualAddress()))
-                {
-                    m_fakeDynamicStringTable = true;
-                }
-                else
-                {
-                    m_types.push_back(new StringTableSegment(m_data, section.getPhysOffset(), section.getSize(), elf::k_strtab));
-                    m_offsets.insert(m_data + section.getPhysOffset());
-                }
+                strTab.insert(tableIndex);
             }
             else if (section.getType() == "K_SYMTAB")
             {
-                if (m_sections.size() > section.getLink() &&  m_sections[section.getLink()].getType() == "K_STRTAB")
-                {
-                    Symbols* otherSymbols = new Symbols();
-                    otherSymbols->createSymbols(m_data, m_size, section.getPhysOffset(), section.getSize(),
-                                                m_sections[section.getLink()].getPhysOffset(),
-                                                m_sections[section.getLink()].getSize(),
-                                                *this, m_is64, m_isLE, m_isDY);
-                    m_otherSymbols.push_back(otherSymbols);
-                    m_offsets.insert(m_data + section.getPhysOffset());
-                }
+                symTab.insert(tableIndex);
             }
             else if (m_initArray.getOffset() == 0 && section.getType() == "K_INIT_ARRAY")
             {
@@ -222,6 +209,59 @@ void AbstractSegments::generateSegments()
                 assert("should not hit here" == 0);
             }
         }
+        ++tableIndex;
+    }
+
+    // loop over the symbol tables we saved and resolve the links.
+    BOOST_FOREACH(std::size_t index, symTab)
+    {
+        // validate that the symtab has a good strtab
+        if (m_sections.size() > m_sections[index].getLink() &&
+            m_sections[m_sections[index].getLink()].getType() == "K_STRTAB")
+        {
+            // create the strtab segment
+            std::size_t link = m_sections[index].getLink();
+            strTab.erase(link);
+
+            // check to see if this is a fake/copied symbol table.
+            if (m_sections[link].getPhysOffset() != 0 &&
+                m_sections[link].getVirtAddress() != 0 &&
+                m_sections[link].getVirtAddress() == m_dynamic.getStringTableVirtualAddress() &&
+                m_sections[link].getPhysOffset() != getOffsetFromVirt(m_dynamic.getStringTableVirtualAddress()))
+            {
+                m_fakeDynamicStringTable = true;
+            }
+            else
+            {
+                // a missing virtual address is enough to confuse readelf.
+                if (m_sections[link].getPhysOffset() != 0 &&
+                    m_sections[link].getVirtAddress() == 0)
+                {
+                    m_strTabMissingVirtAddress = true;
+                }
+                m_types.push_back(new StringTableSegment(m_data, 
+                    m_sections[link].getPhysOffset(), m_sections[link].getSize(), elf::k_strtab));
+                m_offsets.insert(m_data + m_sections[link].getPhysOffset());
+            }
+
+            // create the symtab segment
+            Symbols* otherSymbols = new Symbols();
+            otherSymbols->createSymbols(m_data, m_size, m_sections[index].getPhysOffset(),
+                                        m_sections[index].getSize(),
+                                        m_sections[link].getPhysOffset(),
+                                        m_sections[link].getSize(),
+                                        *this, m_is64, m_isLE, m_isDY);
+            m_otherSymbols.push_back(otherSymbols);
+            m_offsets.insert(m_data + m_sections[index].getPhysOffset());
+        }
+    }
+
+    // for any remaining strtab just create the segment
+    BOOST_FOREACH(std::size_t index, strTab)
+    {
+        m_types.push_back(new StringTableSegment(m_data, m_sections[index].getPhysOffset(),
+            m_sections[index].getSize(), elf::k_strtab));
+        m_offsets.insert(m_data + m_sections[index].getPhysOffset());
     }
 
     // segments are done try to resolve init array functions
@@ -295,7 +335,11 @@ void AbstractSegments::evaluate(std::vector<std::pair<boost::int32_t, std::strin
 
     if (m_fakeDynamicStringTable)
     {
-        p_capabilities[elf::k_antidebug].insert("Fake dynamic symbol table in sections");
+        p_capabilities[elf::k_antidebug].insert("Fake symbol table strings in sections");
+    }
+    if (m_strTabMissingVirtAddress)
+    {
+        p_capabilities[elf::k_antidebug].insert("Symbol table strings section had virtual address zeroed out");
     }
 }
 
