@@ -2,7 +2,7 @@
 #define ABSTRACT_DYNAMIC_HPP
 
 #include <boost/cstdint.hpp>
-#include <string>
+#include <cstring>
 #include <sstream>
 
 #define CEXIT_SUCCESS " ";
