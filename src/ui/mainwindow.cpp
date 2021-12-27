@@ -11,6 +11,7 @@
 #include <QFileDialog>
 #include <QProgressDialog>
 #include <QClipboard>
+#include <QAction>
 
 #include <iostream>
 #include <boost/foreach.hpp>
